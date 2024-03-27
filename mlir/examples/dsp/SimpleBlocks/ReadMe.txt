@@ -12,3 +12,6 @@ Contents:
     3) Run with example:
         i) From llvm-project/build directory:
         ninja && ./bin/dsp1 ../mlir/test/Examples/DspExample/dsp_gain_op.py -emit=mlir-affine
+
+        ii) Tosa to LinAlg lowering example, from llvm-project/build directory:
+        ninja && ./bin/dsp1 ../mlir/test/Examples/DspExample/dsp_fft2d.mlir -emit=mlir-linalg

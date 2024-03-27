@@ -25,6 +25,7 @@ add_dsp_chapter(dsp1
   mlir/MLIRGen.cpp
   mlir/Dialect.cpp
   mlir/LowerToAffineLoops.cpp
+  mlir/TosaToLinalgPass.cpp
   mlir/LowerToLLVM.cpp
   mlir/ShapeInferencePass.cpp
   mlir/ToyCombine.cpp
