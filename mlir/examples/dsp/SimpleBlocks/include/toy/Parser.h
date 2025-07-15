@@ -167,6 +167,16 @@ private:
     return v;
   }
 
+  /// parenexpr ::= '"' string_val '"'
+  std::unique_ptr<ExprAST> parseStringExpr() {
+    auto loc = lexer.getLastLocation();
+
+    std::string string_val(lexer.getString());
+    lexer.consume(tok_string_val);
+
+    return std::make_unique<StringExprAST>(std::move(loc), string_val);
+  }
+  
   /// identifierexpr
   ///   ::= identifier
   ///   ::= identifier '(' expression ')'
@@ -175,7 +185,7 @@ private:
 
     auto loc = lexer.getLastLocation();
     lexer.getNextToken(); // eat identifier.
-
+    
     if (lexer.getCurToken() != '(') // Simple variable ref.
       return std::make_unique<VariableExprAST>(std::move(loc), name);
 
@@ -216,6 +226,7 @@ private:
   ///   ::= numberexpr
   ///   ::= parenexpr
   ///   ::= tensorliteral
+  ///   ::= stringexpr
   std::unique_ptr<ExprAST> parsePrimary() {
     switch (lexer.getCurToken()) {
     default:
@@ -230,6 +241,8 @@ private:
       return parseParenExpr();
     case '[':
       return parseTensorLiteralExpr();
+    case tok_string_val:
+      return parseStringExpr();
     case ';':
       return nullptr;
     case '}':
@@ -334,7 +347,11 @@ private:
     if (!type)
       type = std::make_unique<VarType>();
     lexer.consume(Token('='));
-    auto expr = parseExpression();
+    std::unique_ptr<ExprAST> expr;
+    if(lexer.getCurToken() == tok_string_val) {
+        expr = parseStringExpr();
+    }
+    else expr = parseExpression();
     return std::make_unique<VarDeclExprAST>(std::move(loc), std::move(id),
                                             std::move(*type), std::move(expr));
   }
@@ -465,6 +482,8 @@ private:
       return 40;
     case '/':
       return 40;
+    case '^':
+      return 60;
     default:
       return -1;
     }

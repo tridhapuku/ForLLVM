@@ -35,6 +35,7 @@
 # Explicit files to ignore (only matches one).
 #==============================================================================#
 # Various tag programs
+tags
 /tags
 /TAGS
 /GPATH
@@ -73,3 +74,13 @@ pythonenv*
 # automodapi puts generated documentation files here.
 /lldb/docs/python_api/
 mlir_opt_helper.txt
+mlir/examples/dsp/SimpleBlocks/Output/TryDSPApps/BenchmarkTest/Matlab/Output/*
+mlir/examples/dsp/SimpleBlocks/Output/TryDSPApps/BenchmarkTest/CCode/Output/*
+mlir/examples/dsp/SimpleBlocks/Output/TryDSPApps/BenchmarkTest/DSP-DSL/Output/*
+mlir/examples/dsp/SimpleBlocks/Output/TryDSPApps/BenchmarkTest/Output/*
+# csv files
+*.csv
+/mlir/examples/dsp/SimpleBlocks/Output/TryDSPApps/BenchmarkTest/DSP-DSL/LClanglogs
+/mlir/examples/dsp/SimpleBlocks/Output/TryDSPApps/BenchmarkTest/DSP-DSL/HClanglogs
+/mlir/examples/dsp/SimpleBlocks/Output/TryDSPApps/BenchmarkTest/DSP-DSL/ServerExeLogs
+/mlir/examples/dsp/SimpleBlocks/Output/TryDSPApps/BenchmarkTest/CCode/ServerExeLogs

@@ -43,6 +43,7 @@ public:
     Expr_BinOp,
     Expr_Call,
     Expr_Print,
+    Expr_String,
   };
 
   ExprAST(ExprASTKind kind, Location location)
@@ -105,6 +106,20 @@ public:
 
   /// LLVM style RTTI
   static bool classof(const ExprAST *c) { return c->getKind() == Expr_Var; }
+};
+
+/// Expression class for string val.
+class StringExprAST : public ExprAST {
+  std::string string_val;
+
+public:
+  StringExprAST(Location loc, llvm::StringRef string_val)
+      : ExprAST(Expr_String, std::move(loc)), string_val(string_val) {}
+
+  llvm::StringRef getStringVal() { return string_val; }
+
+  /// LLVM style RTTI
+  static bool classof(const ExprAST *c) { return c->getKind() == Expr_String; }
 };
 
 /// Expression class for defining a variable.

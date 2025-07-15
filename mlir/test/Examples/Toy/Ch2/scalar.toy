@@ -2,6 +2,10 @@
 
 def main() {
   var a<2, 2> = 5.5;
+  var b = 6;
+  var c = 8;
+  var d = b+c;
+  print(d);
   print(a);
 }
 

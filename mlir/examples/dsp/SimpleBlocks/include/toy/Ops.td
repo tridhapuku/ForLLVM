@@ -93,6 +93,26 @@ def ConstantOp : Dsp_Op<"constant", [Pure]> {
 }
 
 //===----------------------------------------------------------------------===//
+// ModuloOp
+//===----------------------------------------------------------------------===//
+
+def ModuloOp : Dsp_Op<"modulo",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "element-wise modulo operation";
+  let description = [{
+    The "modulo" operation performs element-wise modulo op between two tensors.
+    The shapes of the tensor operands are expected to match.
+  }];
+
+  let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
+  let results = (outs F64Tensor);
+  
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+//===----------------------------------------------------------------------===//
 // AddOp
 //===----------------------------------------------------------------------===//
 
@@ -284,7 +304,60 @@ def DivOp : Dsp_Op<"div",
   let builders = [
     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
   ];
+
+  let hasCanonicalizer = 1;
 }
+
+//===----------------------------------------------------------------------===//
+// BitwiseAndOp
+//===----------------------------------------------------------------------===//
+
+def BitwiseAndOp : Dsp_Op<"bitwiseand",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "bit-wise and operation";
+  let description = [{
+    The "bitwiseand" operation performs bit-wise and between two
+    tensors. The shapes of the tensor operands are expected to match.
+  }];
+
+  let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
+  let results = (outs F64Tensor);
+
+  // Indicate that the operation has a custom parser and printer method.
+  let hasCustomAssemblyFormat = 1;
+
+  // Allow building a BitwiseAndOp with from the two input operands.
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+  ];
+}
+
+//===----------------------------------------------------------------------===//
+// PowerOp
+//===----------------------------------------------------------------------===//
+
+def PowOp : Dsp_Op<"pow",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]>{
+        let summary = "element-wise power operation for tensor";
+        let description = [{
+            The "pow" operation performs element-wise power for base tensor.
+                The accepted operand is restrict to a scaler constant.
+        }];
+
+        let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
+        let results = (outs F64Tensor);
+
+        // has custom parser and printer for method
+        // FIXME: pow op should have custom assembly format
+        // let hasCustomAssemblyFormat = 1;
+
+        // Allow building a PowOp from two operands.
+        let builders = [
+            OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+        ];
+        let hasVerifier = 1;
+    }
+
 
 //===----------------------------------------------------------------------===//
 // PrintOp
@@ -443,6 +516,7 @@ def DelayOp : Dsp_Op<"delay" ,
   let hasCanonicalizer = 1;
 
   let hasVerifier = 1;
+
 }
 
 
@@ -517,13 +591,55 @@ def SubOp : Dsp_Op<"sub", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInte
  }
 
 //===----------------------------------------------------------------------===//
+// FFTRealOp
+//===----------------------------------------------------------------------===//
+
+def FFTRealOp : Dsp_Op<"fftReal", [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "Performs FFT Operation on the input";
+  let description = [{
+      This function accepts a 1D input array of size 2^n and returns the real part of its Fourier transform, 
+      producing an output array of the same size. The function is designed to work exclusively with input sizes that are powers of 2. 
+      Providing an array of any other size will result in a segmentation fault.
+  }];
+
+  let arguments = (ins F64Tensor:$lhs);
+  let results = (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$lhs)>
+  ]; 
+
+  let hasCanonicalizer = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// FFTImagOp
+//===----------------------------------------------------------------------===//
+
+def FFTImagOp : Dsp_Op<"fftImag", [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "Performs FFT Operation on the input";
+  let description = [{
+      This function accepts a 1D input array of size 2^n and returns the imaginary part of its Fourier transform, 
+      producing an output array of the same size. The function is designed to work exclusively with input sizes that are powers of 2. 
+      Providing an array of any other size will result in a segmentation fault.
+  }];
+
+  let arguments = (ins F64Tensor:$lhs);
+  let results = (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$lhs)>
+  ]; 
+}
+
+//===----------------------------------------------------------------------===//
 // zeroCrossCountOp
 //===----------------------------------------------------------------------===//
 def zeroCrossCountOp : Dsp_Op<"zeroCrossCount" ,
     [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
-  let summary = "shifting tensor by given number";
+  let summary = "count the crosses through zero";
   let description = [{
-    The "zeroCrossCountOp" operation detects no of zero crosses in a given array -- 
+    The "zeroCrossCount" operation detects no of zero crosses in a given array -- 
     ex: [-1 , -2 , 3, 0 , 0, -2] has 2 zero-crosses 
   }];
 
@@ -587,6 +703,21 @@ def FIRFilterResponseOp : Dsp_Op<"FIRFilterResponse" ,
 }
 
 //===----------------------------------------------------------------------===//
+// MedianFilterOp
+//===----------------------------------------------------------------------===//
+
+def MedianFilterOp : Dsp_Op<"medianFilter", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  
+  let arguments = (ins F64Tensor:$input);
+  let results = (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$input)>
+  ];
+}
+
+//===----------------------------------------------------------------------===//
 // SlidingWindowAvg
 //===----------------------------------------------------------------------===//
 
@@ -611,6 +742,7 @@ def SlidingWindowAvgOp : Dsp_Op<"slidingWindowAvg",
 
   // Indicate that additional verification for this operation is necessary.
   let hasVerifier = 1;
+  let hasCanonicalizer = 1;
 }
 
 
@@ -829,17 +961,8 @@ def IFFT1DOp : Dsp_Op<"ifft1d",
   let arguments = (ins F64Tensor:$real ,  F64Tensor:$img);
   // let results = (outs F64Tensor:$real, F64Tensor:$img); //(ins F64Tensor:$lhs, F64Tensor:$rhs);
   let results = (outs F64Tensor);
-  // let results = (outs F64Tensor:$real);
-  // let assemblyFormat = [{
-  //   `(` $input `:` type($input) `)` attr-dict `to` type(results)
-  // }];
 
-  // let assemblyFormat = [{
-  //   `(` $input `:` type($input) `)` attr-dict `to` `(` type($real) `,` type($img) `)`
-  // }];
-
-  // Enable registering canonicalization patterns with this operation.
-  // let hasCanonicalizer = 1;
+  let hasCanonicalizer = 1;
 
   // Allow building a IFFT1D with from the input operand.
   let builders = [
@@ -1235,6 +1358,93 @@ def GetElemAtIndxOp : Dsp_Op<"getElemAtIndx",
   // Indicate that additional verification for this operation is necessary.
   let hasVerifier = 1;
 }
+
+
+
+
+
+
+//===----------------------------------------------------------------------===//
+// GetSingleElemAtIdxOp
+//===----------------------------------------------------------------------===//
+
+def GetSingleElemAtIdxOp : Dsp_Op<"getSingleElemAtIndx",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "This one access ranked tensor at idx and returns signle tensor without dimension.";
+
+  let arguments = (ins F64Tensor:$input, F64Tensor:$indx);
+  let results = (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$input, "Value":$indx)>
+  ];
+
+  // Indicate that additional verification for this operation is necessary.
+  //let hasVerifier = 1;
+}
+
+
+
+
+//===----------------------------------------------------------------------===//
+// Diff2MeanOptimizedOp
+//===----------------------------------------------------------------------===//
+
+def Diff2MeanOptimizedOp : Dsp_Op<"diff2meanOpt",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "This one implemnets mean(diff(input)) as (input[-1] - input[0])/len(input). Note that mean uses length of diff, this operation consider input[-1] == input[length paramter of mean], not input[length paramter of mean-1]";
+
+  let arguments = (ins F64Tensor:$input, F64Tensor:$length);
+  let results = (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$input, "Value":$length)>
+  ];
+}
+
+
+
+//===----------------------------------------------------------------------===//
+// FindPeaks2Diff2MeanOptimizedOp
+//===----------------------------------------------------------------------===//
+
+def FindPeaks2Diff2MeanOptimizedOp : Dsp_Op<"findpeaks2diff2meanOpt",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "This one implemnets mean(diff(find_peaks(input))) as (peak[-1] - peak[0])/(len(peaks)-1).";
+
+   let arguments = (ins F64Tensor:$signal, F64Tensor:$height, F64Tensor:$distance);
+   let results = (outs F64Tensor);
+   
+   let builders = [
+     OpBuilder<(ins "Value":$signal, "Value":$height, "Value":$distance)>
+   ];
+}
+
+
+
+
+
+
+
+//===----------------------------------------------------------------------===//
+// LMS2FindPeaksOptimizedOp
+//===----------------------------------------------------------------------===//
+
+def LMS2FindPeaksOptimizedOp : Dsp_Op<"lms2findPeaks",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "Fusing loop for LMSFilterResponseOp and FindPeaksOp";
+
+  let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs, F64Tensor:$mu, F64Tensor:$filterLen, F64Tensor:$height, F64Tensor:$distance);
+  let results = (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs, "Value":$mu, "Value":$filterLen, "Value":$height, "Value":$distance)>
+  ];
+}
+
+
+
+
 
 
 //===----------------------------------------------------------------------===//
@@ -1909,4 +2119,856 @@ def FFT1DImgConjSymmOp : Dsp_Op<"fft1DimgConjSymm",
   let hasVerifier = 1;
 }
 
+
+
+//===----------------------------------------------------------------------===//
+// ShiftRightOp
+//===----------------------------------------------------------------------===//
+
+def ShiftRightOp : Dsp_Op<"shiftRight", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "Bit-wise shift right a by b";
+   let description = [{
+     The shift right block shifts each element of a vector by right-hand side integer. 
+   }]; 
+
+   let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs); //Problem: how can we do logical shift with floating point tensor?
+   let results = (outs F64Tensor);
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+   // let assemblyFormat = [{
+   //   `(` $input `:` type($input1 , $input2) `)` attr-dict `to` type(results)
+   // }];
+   // Allow building a MulOp with from the two input operands.
+   let builders = [
+     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+   ];
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+
+   // let hasVerifier = 1;
+ }
+
+
+//===----------------------------------------------------------------------===//
+// MatmulOp
+//===----------------------------------------------------------------------===//
+
+def MatmulOp : Dsp_Op<"matmul", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "Matrix multiplication a * b";
+   let description = [{
+     Matrix multiplication between the left-hand side and right-hand side.
+   }]; 
+
+   let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs); //Problem: how can we do logical shift with floating point tensor?
+   let results = (outs F64Tensor);
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+   // let assemblyFormat = [{
+   //   `(` $input `:` type($input1 , $input2) `)` attr-dict `to` type(results)
+   // }];
+   // Allow building a MulOp with from the two input operands.
+   let builders = [
+     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+   ];
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+
+   let hasVerifier = 1;
+ }
+
+
+
+
+//===----------------------------------------------------------------------===//
+// Conv2DOp
+//===----------------------------------------------------------------------===//
+
+def Conv2DOp : Dsp_Op<"conv2d", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Dsp dialect convolution 2d operation";
+    let description = [{
+        Performs a 2D convolution on the input tensor using specified kernel.
+    }];
+
+    let arguments = (ins F64Tensor:$input, F64Tensor:$kernel, F64Tensor:$bias);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$input, "Value":$kernel, "Value":$bias)>
+    ];
+
+    let extraClassDeclaration = [{
+        static StringRef getStrideName() { return "stride"; }
+        static StringRef getPaddingName() { return "padding"; }
+    }];
+
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// ThresholdUpOp
+//===----------------------------------------------------------------------===//
+
+def ThresholdUpOp : Dsp_Op<"thresholdUp", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Converts all the values above threhold to 1 else 0";
+    let description = [{
+        Converts all the values above threhold to 1 if returnoriginal is false, returns original value if returnoriginal is true else 0
+    }];
+
+    let arguments = (ins F64Tensor:$input, F64Tensor:$threshold, F64Tensor:$returnoriginal);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$input, "Value":$threshold, "Value":$returnoriginal)>
+    ];
+    let hasVerifier = 1;
+    let hasCanonicalizer = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// GenerateDTMFOp
+//===----------------------------------------------------------------------===//
+
+def GenerateDTMFOp : Dsp_Op<"generateDtmf", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Generates signal for the digit input.";
+    let description = [{
+        Converts the digit into a signal.
+    }];
+
+    let arguments = (ins F64Tensor:$digit, F64Tensor:$duration, F64Tensor:$fs);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$digit, "Value":$duration, "Value":$fs)>
+    ];
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// FFTFreqOp
+//===----------------------------------------------------------------------===//
+
+def FFTFreqOp : Dsp_Op<"fftfreq", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Based on --> np.fft.fftfreq(N, d=1/fs)";
+    let description = [{
+        Generates frequency bins for fft.
+    }];
+
+    let arguments = (ins F64Tensor:$length, F64Tensor:$distance);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$length, "Value":$distance)>
+    ];
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// FindDominantPeaksOp
+//===----------------------------------------------------------------------===//
+
+def FindDominantPeaksOp : Dsp_Op<"findDominantPeaks", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "finds two dominant peaks in the frequency array.";
+    let description = [{
+        Designed for the DTMF Application.
+    }];
+
+    let arguments = (ins F64Tensor:$frequencies, F64Tensor:$magnitudes);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$frequencies, "Value":$magnitudes)>
+    ];
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// RecoverDTMFDigitOp
+//===----------------------------------------------------------------------===//
+
+def RecoverDTMFDigitOp : Dsp_Op<"recoverDtmfDigit", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Recover digit from given frequency pair else return -1.";
+    let description = [{
+        -----------------------------.
+    }];
+
+    let arguments = (ins F64Tensor:$frequencies, F64Tensor:$freqPairs);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$frequencies, "Value":$freqPairs)>
+    ];
+    let hasVerifier = 1; 
+} 
+
+//===----------------------------------------------------------------------===//
+// FFTCombineOp
+//===----------------------------------------------------------------------===//
+
+def FFTCombineOp : Dsp_Op<"fftCombine", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Combines the real and imaginary parts to obtain an amplitude array.";
+    let description = [{
+        This function takes arrays of real and imaginary parts of frequency components 
+        and computes the amplitude of each frequency. The amplitudes are returned as an 
+        array representing the magnitudes of the corresponding complex values.
+    }];
+
+    let arguments = (ins F64Tensor:$real, F64Tensor:$imag);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$real, "Value":$imag)>
+    ];
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// GenerateVoiceSignatureOp
+//===----------------------------------------------------------------------===//
+
+def GenerateVoiceSignatureOp : Dsp_Op<"generateVoiceSignature", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Generate voice signature of the speaker.";
+    let description = [{
+        This function takes two frequencies as input along with the duration and 
+        the sampling frequency, and generate the voice signature of the speaker. 
+    }];
+
+    let arguments = (ins F64Tensor:$f1, F64Tensor:$f2, F64Tensor:$duration, F64Tensor:$fs);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$f1, "Value":$f2, "Value":$duration, "Value":$fs)>
+    ];
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// SqrtOp
+//===----------------------------------------------------------------------===//
+
+def SqrtOp : Dsp_Op<"sqrt", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Takes the element wise square root of the tensor.";
+    let description = [{
+        Takes the element wise square root of the tensor.
+    }];
+
+    let arguments = (ins F64Tensor:$input);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$input)>
+    ];
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// QamModulateRealOp real
+//===----------------------------------------------------------------------===//
+
+def QamModulateRealOp : Dsp_Op<"qam_modulate_real", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Dsp dialect qam modulation real operation";
+    let description = [{
+        Performs a digital modulation on input tensor.
+    }];
+
+    let arguments = (ins F64Tensor:$signal);
+
+    let results = (outs F64Tensor:$real);
+
+
+    let builders = [
+        OpBuilder<(ins "Value":$signal)>
+    ];
+
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// QamModulateImgOp imagine
+//===----------------------------------------------------------------------===//
+
+def QamModulateImgOp : Dsp_Op<"qam_modulate_imagine", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Dsp dialect qam modulation imagine operation";
+    let description = [{
+        Performs a digital modulation on input tensor.
+    }];
+
+    let arguments = (ins F64Tensor:$signal);
+
+    let results = (outs F64Tensor:$imagine);
+
+
+    let builders = [
+        OpBuilder<(ins "Value":$signal)>
+    ];
+
+    let hasVerifier = 1;
+}
+
+
+//===----------------------------------------------------------------------===//
+// QamDemodulateOp
+//===----------------------------------------------------------------------===//
+
+def QamDemodulateOp : Dsp_Op<"qam_demodulate", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Dsp dialect qam demodulation operation";
+    let description = [{
+        Takes in 2 arrays, one is the real part of a signal the other is the imaginary part of a signal.
+        Returns the decoded binary output.
+    }];
+
+    let arguments = (ins F64Tensor:$real, F64Tensor:$imagine);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$real, "Value":$imagine)>
+    ];
+
+
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// FindPeaksOp
+//===----------------------------------------------------------------------===//
+
+def FindPeaksOp : Dsp_Op<"find_peaks", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "Find peaks from the signal. Since the number of peaks vary, the output is initialized as -1.";
+   let description = [{
+		Input: signal, height, distance
+		Output: indices of peaks. All of none-used values are initialized as -1, so the length can be measured by this.
+
+		Functionality: check the below original python-level code.
+		
+		def manual_find_peaks(signal, height, distance):
+			peaks = []
+			for i in range(1, len(signal) - 1):
+				# Check if the current point is higher than its neighbors
+				if signal[i] > signal[i-1] and signal[i] > signal[i+1]:
+					# Check if it meets the height criterion
+					if signal[i] >= height:
+						# Check if it's far enough from the previously detected peak
+						if not peaks or i - peaks[-1] >= distance:
+							peaks.append(i)
+			return np.array(peaks)
+
+   }]; 
+
+   let arguments = (ins F64Tensor:$signal, F64Tensor:$height, F64Tensor:$distance);
+   let results = (outs F64Tensor);
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+   // let assemblyFormat = [{
+   //   `(` $input `:` type($input1 , $input2) `)` attr-dict `to` type(results)
+   // }];
+   // Allow building a MulOp with from the two input operands.
+   
+   let builders = [
+     OpBuilder<(ins "Value":$signal, "Value":$height, "Value":$distance)>
+   ];
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+
+   // let hasVerifier = 1;
+   let hasCanonicalizer = 1;
+
+ }
+
+
+//===----------------------------------------------------------------------===//
+// BeamFormOp
+//===----------------------------------------------------------------------===//
+
+def BeamFormOp : Dsp_Op<"beam_form", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Dsp dialect Beam forming operation";
+    let description = [{
+        Performs a beam forming signal encoding on the input tensor using specified weights.
+    }];
+
+    let arguments = (ins I64Attr:$antennas, I64Attr:$freq, F64Tensor:$time, F64Tensor:$weights);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "int64_t":$antennas, "int64_t":$freq, "Value":$time, "Value":$weights)>
+    ];
+
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// SpaceModulateOp
+//===----------------------------------------------------------------------===//
+
+def SpaceModulateOp : Dsp_Op<"space_modulate", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Dsp dialect space modulation operation";
+    let description = [{
+        Takes in string input and convert it to binary.
+    }];
+
+    let arguments = (ins F64Tensor:$signal);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$signal)>
+    ];
+
+    let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// SpaceDemodulateOp
+//===----------------------------------------------------------------------===//
+
+def SpaceDemodulateOp : Dsp_Op<"space_demodulate", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Dsp dialect space demodulation operation";
+    let description = [{
+        Takes in binary input and convert it to string.
+    }];
+
+    let arguments = (ins F64Tensor:$binary);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$binary)>
+    ];
+
+    let hasVerifier = 1;
+    let hasCanonicalizer = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// SpaceErrCorrectionOp
+//===----------------------------------------------------------------------===//
+
+def SpaceErrCorrectionOp : Dsp_Op<"space_err_correction", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+    let summary = "Dsp dialect space error correction operation";
+    let description = [{
+        Remove noise operation for signal transmission in space.
+    }];
+
+    let arguments = (ins F64Tensor:$signal);
+
+    let results = (outs F64Tensor:$output);
+
+    let builders = [
+        OpBuilder<(ins "Value":$signal)>
+    ];
+
+    let hasVerifier = 1;
+}
+
+
+//===----------------------------------------------------------------------===//
+// MaxOp
+//===----------------------------------------------------------------------===//
+
+def MaxOp : Dsp_Op<"max", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "Find maximum value in tensor";
+   let description = [{
+		This operation finds and returns the maximum value of the tensor.
+   }]; 
+
+   let arguments = (ins F64Tensor:$input);
+   let results = (outs F64Tensor);
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+   // let assemblyFormat = [{
+   //   `(` $input `:` type($input1 , $input2) `)` attr-dict `to` type(results)
+   // }];
+   // Allow building a MulOp with from the two input operands.
+   
+   let builders = [
+     OpBuilder<(ins "Value":$input)>
+   ];
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+
+   // let hasVerifier = 1;
+   let hasCanonicalizer = 1;
+ }
+ 
+
+//===----------------------------------------------------------------------===//
+// MeanOp
+//===----------------------------------------------------------------------===//
+
+def MeanOp : Dsp_Op<"mean", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "Find mean value of tensor. Requires (input, length).";
+   let description = [{
+		This operation finds and returns the mean value of the tensor.
+        Note that it requires length.
+		It would be better if we can implement both versions 
+		- no length argument -> automatically use the length of tensor
+		- with length argument -> use the provided length
+   }]; 
+
+   let arguments = (ins F64Tensor:$input, F64Tensor:$length);
+   let results = (outs F64Tensor);
+   
+   let builders = [
+     OpBuilder<(ins "Value":$input, "Value":$length)>
+   ];
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+
+   // let hasVerifier = 1;
+   let hasCanonicalizer = 1;
+ }
+ 
+
+
+//===----------------------------------------------------------------------===//
+// DiffOp
+//===----------------------------------------------------------------------===//
+
+def DiffOp : Dsp_Op<"diff", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "np.diff (out[i] = a[i+1] - a[i]). It receives second argument as length";
+   let description = [{
+		This operation returns a tensor that contains diff (out[i] = a[i+1] - a[i]).
+		The length of the output tensor is len(input)-1, regardless of length parameter.
+		Note that it requires length.
+		It would be better if we can implement both versions 
+		- no length argument -> automatically use the length of tensor
+		- with length argument -> use the provided length
+   }]; 
+
+   let arguments = (ins F64Tensor:$input, F64Tensor:$length);
+   let results = (outs F64Tensor);
+   
+   let builders = [
+     OpBuilder<(ins "Value":$input, "Value":$length)>
+   ];
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+
+   // let hasVerifier = 1;
+ }
+ 
+//===----------------------------------------------------------------------===//
+// AbsOp
+//===----------------------------------------------------------------------===//
+
+def AbsOp : Dsp_Op<"abs", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "np.abs -> calculate the absolute value element-wise";
+   let description = [{
+       This operation calculates the absolute value element-wise.
+   }]; 
+
+   let arguments = (ins F64Tensor:$input);
+   let results = (outs F64Tensor:$output);
+   
+   let builders = [
+     OpBuilder<(ins "Value":$input)>
+   ];
+ }
+
+
+//===----------------------------------------------------------------------===//
+// ArgMaxOp
+//===----------------------------------------------------------------------===//
+
+def ArgMaxOp : Dsp_Op<"argmax", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "np.argmax -> find the indices of the maximum values along a specifies axis in an array.";
+   let description = [{
+       This operation find the indices of the maximum values along a specifies axis in an array.
+   }]; 
+
+   let arguments = (ins F64Tensor:$input, I64Attr:$axis);
+   let results = (outs F64Tensor:$output);
+   
+   let builders = [
+     OpBuilder<(ins "Value":$input, "int64_t":$axis)>
+   ];
+ }
+//===----------------------------------------------------------------------===//
+// NormalizeOp
+//===----------------------------------------------------------------------===//
+
+def NormalizeOp : Dsp_Op<"normalize", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "normalize operation.";
+   let description = [{
+       normalization dsp operation.
+   }]; 
+
+   let arguments = (ins F64Tensor:$signal);
+   let results = (outs F64Tensor);
+   
+   let builders = [
+     OpBuilder<(ins "Value":$signal)>
+   ];
+
+    let hasCanonicalizer = 1;
+ }
+
+//===----------------------------------------------------------------------===//
+// NormLMSFilterResponseOptimizeOp
+//===----------------------------------------------------------------------===//
+
+
+def NormLMSFilterResponseOptimizeOp : Dsp_Op<"norm_LMSFilterResponse_opt",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "LMS filter Response + norm optimize";
+  let description = [{
+      norm + lmsfilter
+  }];
+
+  let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs, F64Tensor:$mu, F64Tensor:$filterLen);
+
+   let results = (outs F64Tensor);
+
+   let builders = [
+     OpBuilder<(ins "Value":$lhs, "Value":$rhs, "Value":$mu, "Value":$filterLen)>
+   ];
+
+   let hasVerifier = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// Median2SlidingOptimizedOp
+//===----------------------------------------------------------------------===//
+
+def Median2SlidingOptimizedOp : Dsp_Op<"median2slidingOp", 
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  
+  let arguments = (ins F64Tensor:$input);
+  let results = (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$input)>
+  ];
+}
+
+
+//===----------------------------------------------------------------------===//
+// FIRFilterResSymmThresholdUpOptimizedOp
+//===----------------------------------------------------------------------===//
+def FIRFilterResSymmThresholdUpOptimizedOp : Dsp_Op<"FIRFilterResSymmThresholdUpOptimizedOp" ,
+    [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "FIRFilterResSymmThresholdUpOptimizedOp";
+  let description = [{
+    The "FIRFilterResSymmThresholdUpOptimizedOp" operation is basically the convolution of input 1-D and filter vector when the filter is symmetrical ie,
+    h[0] = h[L-1] , h[1] = h[L-2] .. h[middle ie, (L-1)/2] is single element & filter length is odd always
+    ex: x[n] = [2,1,3,2,4], h[l] = [1, -1 ,1]  then
+      y[n] = sum(h(k) . x(n-k)) k=0 to N-1 can be rewritten as 
+      y[n] = sum(h[k] .{ x[n-k] + x[n-(L-1-k)]}) + h[L-1/2].x[n-(L-1)/2] , k=0 to L-1/2
+
+      Basically, we are trying to reduce the number of load/store operations by half -- so that we can reduce the operations
+  }];
+
+  let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs, F64Tensor:$threshold, F64Tensor:$returnoriginal); 
+  let results =  (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs, "Value":$threshold, "Value":$returnoriginal)>
+  ];
+
+}
+
+//===----------------------------------------------------------------------===//
+// FFTOp
+//===----------------------------------------------------------------------===//
+
+def FFTOp : Dsp_Op<"fft", [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "Performs FFT Operation on the input";
+  let description = [{
+      This function accepts a 1D input array of size 2^n and returns the real part of its Fourier transform, 
+      producing an output array of the same size. The function is designed to work exclusively with input sizes that are powers of 2. 
+      Providing an array of any other size will result in a segmentation fault.
+  }];
+
+  let arguments = (ins F64Tensor:$lhs);
+  let results = (outs F64Tensor:$real, F64Tensor:$imag);
+
+  let builders = [
+    OpBuilder<(ins "Value":$lhs)>
+  ]; 
+
+  // let hasCanonicalizer = 1;
+}
+
+//===----------------------------------------------------------------------===//
+// FFTAbsOp
+//===----------------------------------------------------------------------===//
+
+def FFTAbsOp : Dsp_Op<"FFTAbsOp", [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "FFTAbsOp";
+  let description = [{
+      ------------------
+  }];
+
+  let arguments = (ins F64Tensor:$input);
+  let results = (outs F64Tensor:$amplitude);
+
+  let builders = [
+    OpBuilder<(ins "Value":$input)>
+  ]; 
+}
+
+//===----------------------------------------------------------------------===//
+// DFTAbsOp
+//===----------------------------------------------------------------------===//
+
+def DFTAbsOp : Dsp_Op<"DFTAbsOp", [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "DFTAbsOp";
+  let description = [{
+      ------------------
+  }];
+
+  let arguments = (ins F64Tensor:$input);
+  let results = (outs F64Tensor:$amplitude);
+
+  let builders = [
+    OpBuilder<(ins "Value":$input)>
+  ]; 
+}
+
+//===----------------------------------------------------------------------===//
+// DFTAbsThresholdUpOp
+//===----------------------------------------------------------------------===//
+
+def DFTAbsThresholdUpOp : Dsp_Op<"DFTAbsThresholdUpOp", [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "DFTAbsThresholdUpOp";
+  let description = [{
+      ------------------
+  }];
+
+  let arguments = (ins F64Tensor:$input, F64Tensor:$threshold, F64Tensor:$returnoriginal);
+  let results = (outs F64Tensor:$amplitude);
+
+  let builders = [
+    OpBuilder<(ins "Value":$input, "Value":$threshold, "Value":$returnoriginal)>
+  ]; 
+  let hasVerifier = 1;
+}
+
+
+//===----------------------------------------------------------------------===//
+// CorrelateOp
+//===----------------------------------------------------------------------===//
+
+def CorrelateOp : Dsp_Op<"correlate", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "This implements scp.correlate. Right now we assume size of lhs == size of rhs";
+   let description = [{
+		This operation finds and returns the maximum value of the tensor.
+   }]; 
+
+   let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
+   let results = (outs F64Tensor);
+
+   // Indicate that the operation has a custom parser and printer method.
+   // let hasCustomAssemblyFormat = 1;
+   // let assemblyFormat = [{
+   //   `(` $input `:` type($input1 , $input2) `)` attr-dict `to` type(results)
+   // }];
+   // Allow building a MulOp with from the two input operands.
+   
+   let builders = [
+     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+   ];
+
+   // let hasVerifier = 1;
+ }
+ 
+ 
+//===----------------------------------------------------------------------===//
+// SetSingleElemAtIdxOp
+//===----------------------------------------------------------------------===//
+
+def SetSingleElemAtIdxOp : Dsp_Op<"setSingleElemAtIndx",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "This one access ranked tensor at idx and sets signle tensor with or without dimension.";
+
+  let arguments = (ins F64Tensor:$input, F64Tensor:$indx , F64Tensor:$val);
+  let results = (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$input, "Value":$indx, "Value":$val)>
+  ];
+
+  // Indicate that additional verification for this operation is necessary.
+  //let hasVerifier = 1;
+}
+
+
+//===----------------------------------------------------------------------===//
+// Correl2MaxOptimizedOp
+//===----------------------------------------------------------------------===//
+
+def Correl2MaxOptimizedOp : Dsp_Op<"correl2max", [Pure , DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+   let summary = "Find the index of maximum value in tensor. outputs with floating point-converted index";
+   let description = [{
+		This operation fuses loops for correlate and max.
+   }]; 
+
+   let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs);
+   let results = (outs F64Tensor);
+   
+   let builders = [
+     OpBuilder<(ins "Value":$lhs, "Value":$rhs)>
+   ];
+ }
+
+
+
+
+//===----------------------------------------------------------------------===//
+// LMSFilterResponse2GainOp
+//===----------------------------------------------------------------------===//
+
+def LMSFilterResponse2GainOp : Dsp_Op<"lmsFilterResponse2gain",
+    [Pure, DeclareOpInterfaceMethods<ShapeInferenceOpInterface>]> {
+  let summary = "Fusing loop for LMSFilterResponseOp and GainOp";
+
+  let arguments = (ins F64Tensor:$lhs, F64Tensor:$rhs, F64Tensor:$mu, F64Tensor:$filterLen, F64Tensor:$gain);
+  let results = (outs F64Tensor);
+
+  let builders = [
+    OpBuilder<(ins "Value":$lhs, "Value":$rhs, "Value":$mu, "Value":$filterLen, "Value":$gain)>
+  ];
+}
+
+
+
+
 #endif // TOY_OPS
+
+
+

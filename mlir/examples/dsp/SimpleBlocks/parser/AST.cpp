@@ -51,6 +51,7 @@ private:
   void dump(PrintExprAST *node);
   void dump(PrototypeAST *node);
   void dump(FunctionAST *node);
+  void dump(StringExprAST *node);
 
   // Actually print spaces matching the current indentation level
   void indent() {
@@ -81,13 +82,20 @@ static std::string loc(T *node) {
 void ASTDumper::dump(ExprAST *expr) {
   llvm::TypeSwitch<ExprAST *>(expr)
       .Case<BinaryExprAST, CallExprAST, LiteralExprAST, NumberExprAST,
-            PrintExprAST, ReturnExprAST, VarDeclExprAST, VariableExprAST>(
+            PrintExprAST, ReturnExprAST, VarDeclExprAST, StringExprAST, VariableExprAST>(
           [&](auto *node) { this->dump(node); })
       .Default([&](ExprAST *) {
         // No match, fallback to a generic message
         INDENT();
         llvm::errs() << "<unknown Expr, kind " << expr->getKind() << ">\n";
       });
+}
+
+/// A string expression
+void ASTDumper::dump(StringExprAST *stringExpr) {
+  INDENT();
+  llvm::errs() << "StringExpr \"" << stringExpr->getStringVal() << "\"";
+  llvm::errs() << " " << loc(stringExpr) << "\n";
 }
 
 /// A variable declaration is printing the variable name, the type, and then

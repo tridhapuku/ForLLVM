@@ -36,6 +36,7 @@ enum Token : int {
   tok_bracket_close = '}',
   tok_sbracket_open = '[',
   tok_sbracket_close = ']',
+  tok_comma = ',',
 
   tok_eof = -1,
 
@@ -43,6 +44,7 @@ enum Token : int {
   tok_return = -2,
   tok_var = -3,
   tok_def = -4,
+  tok_string_val = -7,
 
   // primary
   tok_identifier = -5,
@@ -81,6 +83,11 @@ public:
   llvm::StringRef getId() {
     assert(curTok == tok_identifier);
     return identifierStr;
+  }
+
+  llvm::StringRef getString() {
+      assert(curTok == tok_string_val);
+      return stringVal;
   }
 
   /// Return the current number (prereq: getCurToken() == tok_number)
@@ -145,11 +152,13 @@ private:
         return tok_def;
       if (identifierStr == "var")
         return tok_var;
+      if(identifierStr == ",")
+          return tok_comma;
       return tok_identifier;
     }
 
     // Number: [0-9.]+
-    if (isdigit(lastChar) || lastChar == '.') {
+    if (lastChar == '-' || isdigit(lastChar) || lastChar == '.') {
       std::string numStr;
       do {
         numStr += lastChar;
@@ -170,6 +179,17 @@ private:
         return getTok();
     }
 
+    // String val: "..."
+    if(lastChar == '"') {
+        stringVal = "";
+        while (isalnum((lastChar = Token(getNextChar()))) || lastChar == '_' || lastChar== ' ') {
+            if(lastChar == '"') break;
+            stringVal += (char)lastChar;
+        }
+        lastChar = Token(getNextChar());
+        return tok_string_val;
+    }
+
     // Check for end of file.  Don't eat the EOF.
     if (lastChar == EOF)
       return tok_eof;
@@ -188,6 +208,9 @@ private:
 
   /// If the current Token is an identifier, this string contains the value.
   std::string identifierStr;
+    
+  // If current Token is a string val
+  std::string stringVal;
 
   /// If the current Token is a number, this contains the value.
   double numVal = 0;
